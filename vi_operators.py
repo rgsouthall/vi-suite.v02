@@ -581,8 +581,9 @@ class NODE_OT_CSVExport(bpy.types.Operator, io_utils.ExportHelper):
 
     def execute(self, context):
         resnode = bpy.data.node_groups[self.nodeid.split('@')[1]].nodes[self.nodeid.split('@')[0]].inputs['Results in'].links[0].from_node
-        resstring, reslist = '', [['Month'] + resnode['resdict']['Month']] + [['Day'] + resnode['resdict']['Day']] + [['Hour'] + resnode['resdict']['Hour']] + resnode['allresdict'].values()
-        for rline in zip(*reslist):
+        resstring = ' '.join(['Month,', 'Day,', 'Hour,'] + ['{} {},'.format(val[0], val[1]) for val in resnode['resdict'].values() if len(val) == 2] + ['\n'])
+        resdata = [resnode['allresdict']['Month'], resnode['allresdict']['Day'], resnode['allresdict']['Hour']] + [list(resnode['allresdict'][k]) for k in resnode['resdict'].keys() if k in resnode['allresdict'].keys()]
+        for rline in zip(*resdata):
             for r in rline:
                 resstring += '{},'.format(r)
             resstring += '\n'
@@ -720,6 +721,7 @@ class NODE_OT_EnSim(bpy.types.Operator):
         os.chdir(scene['viparams']['newdir'])
         esimcmd = "EnergyPlus" 
         self.esimrun = Popen(esimcmd.split(), stderr = PIPE, shell = True)
+        self.simnode.run = 0
         return {'RUNNING_MODAL'}
 
 class NODE_OT_Chart(bpy.types.Operator, io_utils.ExportHelper):
