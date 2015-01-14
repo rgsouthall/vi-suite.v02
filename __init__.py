@@ -308,13 +308,13 @@ def register():
     (Material.envi_export_lo_shc, Material.envi_export_l1_shc, Material.envi_export_l2_shc, Material.envi_export_l3_shc, Material.envi_export_l4_shc) = \
     [fprop("SHC", "Specific Heat Capacity (J/kgK)", 0, 10000, 1000)] * conlayers
     (Material.envi_export_lo_thi, Material.envi_export_l1_thi, Material.envi_export_l2_thi, Material.envi_export_l3_thi, Material.envi_export_l4_thi) = \
-    [fprop("mm", "Thickness (mm)", 0, 10000, 100)] * conlayers
+    [fprop("mm", "Thickness (mm)", 1, 10000, 100)] * conlayers
     (Material.envi_export_lo_tab, Material.envi_export_l1_tab, Material.envi_export_l2_tab, Material.envi_export_l3_tab, Material.envi_export_l4_tab) = \
-    [fprop("TA", "Thermal Absorptance", 0, 1, 0.8)] * conlayers
+    [fprop("TA", "Thermal Absorptance", 0.001, 1, 0.8)] * conlayers
     (Material.envi_export_lo_sab, Material.envi_export_l1_sab, Material.envi_export_l2_sab, Material.envi_export_l3_sab, Material.envi_export_l4_sab) = \
-    [fprop("SA", "Solar Absorptance", 0, 1, 0.6)] * conlayers
+    [fprop("SA", "Solar Absorptance", 0.001, 1, 0.6)] * conlayers
     (Material.envi_export_lo_vab, Material.envi_export_l1_vab, Material.envi_export_l2_vab, Material.envi_export_l3_vab, Material.envi_export_l4_vab) = \
-    [fprop("VA", "Visible Absorptance", 0, 1, 0.6)] * conlayers
+    [fprop("VA", "Visible Absorptance", 0.001, 1, 0.6)] * conlayers
     (Material.envi_export_lo_odt, Material.envi_export_l1_odt, Material.envi_export_l2_odt, Material.envi_export_l3_odt, Material.envi_export_l4_odt) = \
     [eprop([("SpectralAverage", "SpectralAverage", "Optical Data Type")], "", "Optical Data Type", "SpectralAverage")] * conlayers
     (Material.envi_export_lo_sds, Material.envi_export_l1_sds, Material.envi_export_l2_sds, Material.envi_export_l3_sds, Material.envi_export_l4_sds) = \

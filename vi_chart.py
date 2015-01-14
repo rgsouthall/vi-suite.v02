@@ -75,7 +75,9 @@ def chart_disp(chart_op, plt, dnode, rnodes, Sdate, Edate):
 
         else:
             menus = retmenu(dnode, 'Y-axis 1', dnode.inputs['Y-axis 1'].rtypemenu)
+            print(rn['resdict'][rd][0:2])
             if (rn['resdict'][rd][0:2]) == (menus):
+                print('hi')
                 y1data = timedata(ard[rd][si:ei+1], dnode.timemenu, dnode.inputs['Y-axis 1'].statmenu, ard['Month'], ard['Day'], ard['dos'], dnode, si, ei, Sdate, Edate)
                 ylabel = label(dnode.inputs['Y-axis 1'].rtypemenu, dnode.inputs['Y-axis 1'].statmenu, dnode.timemenu, menus[1])
                 line, = plt.plot(xdata, y1data, color='k', label=rn['resdict'][rd][0] + (" ("+dnode.inputs['Y-axis 1'].statmenu + ")", "")[dnode.timemenu == '0'])
@@ -111,8 +113,8 @@ def chart_disp(chart_op, plt, dnode, rnodes, Sdate, Edate):
         plt.legend()
         plt.grid(True)
         plt.show(block = str(sys.platform) not in ('win32', 'darwin'))
-    except:
-        chart_op.report({'ERROR'}, 'Invalid data for this component')
+    except Exception as e:
+        chart_op.report({'ERROR'}, '{} Invalid data for this component'.format(e))
         
 
     def plot_graph(*args):

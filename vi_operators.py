@@ -581,8 +581,8 @@ class NODE_OT_CSVExport(bpy.types.Operator, io_utils.ExportHelper):
 
     def execute(self, context):
         resnode = bpy.data.node_groups[self.nodeid.split('@')[1]].nodes[self.nodeid.split('@')[0]].inputs['Results in'].links[0].from_node
-        resstring = ' '.join(['Month,', 'Day,', 'Hour,'] + ['{} {},'.format(val[0], val[1]) for val in resnode['resdict'].values() if len(val) == 2] + ['\n'])
-        resdata = [resnode['allresdict']['Month'], resnode['allresdict']['Day'], resnode['allresdict']['Hour']] + [list(resnode['allresdict'][k]) for k in resnode['resdict'].keys() if k in resnode['allresdict'].keys()]
+        resstring = ' '.join(['Month,', 'Day,', 'Hour,'] + ['{} {},'.format(resnode['resdict'][k][0], resnode['resdict'][k][1]) for k in sorted(resnode['resdict'].keys(), key=lambda x: float(x)) if len(resnode['resdict'][k]) == 2] + ['\n'])
+        resdata = [resnode['allresdict']['Month'], resnode['allresdict']['Day'], resnode['allresdict']['Hour']] + [list(resnode['allresdict'][k]) for k in sorted(resnode['resdict'].keys(), key=lambda x: float(x)) if k in resnode['allresdict']]
         for rline in zip(*resdata):
             for r in rline:
                 resstring += '{},'.format(r)
@@ -634,26 +634,15 @@ class NODE_OT_EnExport(bpy.types.Operator, io_utils.ExportHelper):
         shutil.copyfile(locnode.weather, os.path.join(scene['viparams']['newdir'], "in.epw"))
         shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(os.path.realpath( __file__ ))), "EPFiles", "Energy+.idd"), os.path.join(scene['viparams']['newdir'], "Energy+.idd"))
 
-#        if bpy.data.filepath:
         if bpy.context.active_object and not bpy.context.active_object.hide:
             if bpy.context.active_object.type == 'MESH':
                 bpy.ops.object.mode_set(mode = 'OBJECT')
-#            if " " not in scene['viparams']['filedir'] and " " not in scene['viparams']['filename']:
+
         enpolymatexport(self, node, locnode, envi_mats, envi_cons)
         node.bl_label = node.bl_label[1:] if node.bl_label[0] == '*' else node.bl_label
-        node.exported = True
-        node.outputs['Context out'].hide = False
-#            elif " " in str(node.filedir):
-#                self.report({'ERROR'},"The directory path containing the Blender file has a space in it.")
-#                return {'FINISHED'}
-#            elif " " in str(node.filename):
-#                self.report({'ERROR'},"The Blender filename has a space in it.")
-#                return {'FINISHED'}
+        node.exported, node.outputs['Context out'].hide = True, False
         node.export()
         return {'FINISHED'}
-#        else:
-#            self.report({'ERROR'},"Save the Blender file before exporting")
-#            return {'FINISHED'}
 
 class NODE_OT_EnSim(bpy.types.Operator):
     bl_idname = "node.ensim"
@@ -670,9 +659,9 @@ class NODE_OT_EnSim(bpy.types.Operator):
             if self.esimrun.poll() is None:
                 nodecolour(self.simnode, 1)
                 try:
-                    with open(os.path.join(scene['viparams']['newdir'], 'eplusout.eso'), 'r') as resfile:                    
-                        for line in [line for line in resfile.readlines()[::-1] if line.split(',')[0] == '2' and len(line.split(',')) == 9]:  
-                            self.simnode.run = int(100 * int(line.split(',')[1])/(self.simnode.dedoy - self.simnode.dsdoy))
+                    with open(os.path.join(scene['viparams']['newdir'], 'eplusout.eso'), 'r') as resfile: 
+                        for resline in [line for line in resfile.readlines()[::-1] if line.split(',')[0] == '2' and len(line.split(',')) == 9]: 
+                            self.simnode.run = int(100 * int(resline.split(',')[1])/(self.simnode.dedoy - self.simnode.dsdoy))
                             break
                     return {'PASS_THROUGH'}
                 except:
@@ -688,21 +677,18 @@ class NODE_OT_EnSim(bpy.types.Operator):
                 if self.simnode.resname+".err" not in [im.name for im in bpy.data.texts]:
                     bpy.data.texts.load(os.path.join(scene['viparams']['newdir'], self.simnode.resname+".err"))
 
-                if 'EnergyPlus Terminated--Error(s) Detected' in self.esimrun.stderr.read().decode() or not [f for f in nfns if f.split(".")[1] == "eso"]:
+                if 'EnergyPlus Terminated--Error(s) Detected' in self.esimrun.stderr.read().decode() or not [f for f in nfns if f.split(".")[1] == "eso"] or self.simnode.run == 0:
                     errtext = "There is no results file. Check you have selected results outputs and that there are no errors in the .err file in the Blender text editor." if not [f for f in nfns if f.split(".")[1] == "eso"] else "There was an error in the input IDF file. Check the *.err file in Blender's text editor."
-                    self.report({'ERROR'}, errtext)
+                    self.report({'ERROR'}, errtext) 
                     self.simnode.run = -1
                     return {'CANCELLED'}
-                else:
-                    self.simnode.run = -1
+                else: 
                     nodecolour(self.simnode, 0)
                     processf(self, self.simnode)
                     self.report({'INFO'}, "Calculation is finished.") 
-#                    if self.simnode.outputs[0].links:
-#                        self.simnode.outputs[0].links[0].to_node.update()
-                    
                     scene.vi_display, scene.sp_disp_panel, scene.li_disp_panel, scene.lic_disp_panel, scene.en_disp_panel, scene.ss_disp_panel, scene.wr_disp_panel = 0, 0, 0, 0, 0, 0, 0                    
-                    return {'FINISHED'}
+                    self.simnode.run = -1
+                    return {'FINISHED'}                
         else:
             return {'PASS_THROUGH'}
             
@@ -715,9 +701,9 @@ class NODE_OT_EnSim(bpy.types.Operator):
         self._timer = wm.event_timer_add(1, context.window)
         wm.modal_handler_add(self)
         self.simnode = bpy.data.node_groups[self.nodeid.split('@')[1]].nodes[self.nodeid.split('@')[0]]
+        self.simnode.sim()
         self.connode = self.simnode.inputs['Context in'].links[0].from_node
         self.simnode.resfilename = os.path.join(scene['viparams']['newdir'], self.simnode.resname+'.eso')
-#        self.simnode.dsdoy, self.simnode.dedoy, self.simnode.run = self.connode.sdoy, self.connode.edoy, 0 # (locnode.startmonthnode.sdoy  
         os.chdir(scene['viparams']['newdir'])
         esimcmd = "EnergyPlus" 
         self.esimrun = Popen(esimcmd.split(), stderr = PIPE, shell = True)
@@ -1088,7 +1074,6 @@ class NODE_OT_Shadow(bpy.types.Operator):
         scene['visimcontext'] = 'Shadow'
         if not scene.get('liparams'):
            scene['liparams'] = {} 
-#        else:
         scene['liparams']['cp'], scene['liparams']['unit'] = simnode.cpoint, '% Sunlit'
         simnode.export(scene)
         (scene.fs, scene.fe) = (scene.frame_current, scene.frame_current) if simnode.animmenu == 'Static' else (scene.frame_start, scene.frame_end)

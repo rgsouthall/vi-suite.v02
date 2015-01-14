@@ -238,6 +238,8 @@ def processf(pro_op, node):
                 'Zone Air Relative Humidity [%] !Hourly': 'Humidity (%)',
                 'Zone Air System Sensible Heating Rate [W] !Hourly': 'Zone heating (W)',
                 'Zone Air System Sensible Cooling Rate [W] !Hourly': 'Zone cooling (W)',
+                'Zone Ideal Loads Supply Air Sensible Heating Rate [W] !Hourly': 'Zone air heating (W)',
+                'Zone Ideal Loads Supply Air Sensible Cooling Rate [W] !Hourly': 'Zone air cooling (W)',
                 'Zone Windows Total Transmitted Solar Radiation Rate [W] !Hourly': 'Solar gain (W)',
                 'Zone Infiltration Current Density Volume Flow Rate [m3/s] !Hourly': 'Infiltration (m'+u'\u00b3'+')',
                 'Zone Infiltration Air Change Rate [ach] !Hourly': 'Infiltration (ACH)',
@@ -247,7 +249,8 @@ def processf(pro_op, node):
                 'Zone Thermal Comfort Fanger Model PMV [] !Hourly' :'PMV',               
                 'AFN Node CO2 Concentration [ppm] !Hourly': 'CO2',
                 'Zone Air CO2 Concentration [ppm] !Hourly': 'CO2',
-                'Zone Mean Radiant Temperature [C] !Hourly': 'MRT', 'Zone People Occupant Count [] !Hourly': 'Occupancy'}
+                'Zone Mean Radiant Temperature [C] !Hourly': 'MRT', 'Zone People Occupant Count [] !Hourly': 'Occupancy', 
+                'Zone Air Heat Balance Surface Convection Rate [W] !Hourly': 'Heat balance (W)'}
     enresdict = {'AFN Node CO2 Concentration [ppm] !Hourly': 'CO2'}
     lresdict = {'AFN Linkage Node 1 to Node 2 Volume Flow Rate [m3/s] !Hourly': 'Linkage Flow out',
                 'AFN Linkage Node 2 to Node 1 Volume Flow Rate [m3/s] !Hourly': 'Linkage Flow in',
@@ -264,9 +267,12 @@ def processf(pro_op, node):
                 if len(linesplit) == 1:
                     intro = 0
                 elif linesplit[1] == '1' and '!Hourly' in linesplit[-1]:
-                    if linesplit[3] in zresdict and linesplit[2].strip('_OCCUPANCY') not in objlist and 'ExtNode' not in linesplit[2]:
+                    if linesplit[3] in zresdict and linesplit[2][-10:] == '_OCCUPANCY' and linesplit[2].strip('_OCCUPANCY') not in objlist and 'ExtNode' not in linesplit[2]:
                         objlist.append(linesplit[2].strip('_OCCUPANCY'))
-                    
+                    elif linesplit[3] in zresdict and linesplit[2][-4:] == '_AIR' and linesplit[2].strip('_AIR') not in objlist and 'ExtNode' not in linesplit[2]:
+                        objlist.append(linesplit[2].strip('_AIR'))
+                    elif linesplit[3] in zresdict and linesplit[2] not in objlist and 'ExtNode' not in linesplit[2]:
+                        objlist.append(linesplit[2])
 #                    allresdict[linesplit[0]] = ['{} {}'.format(linesplit[2], linesplit[-1].strip(' !Hourly'))]
                     allresdict[linesplit[0]] = []
             elif not intro and len(linesplit) == 2:
@@ -297,18 +303,42 @@ def processf(pro_op, node):
                 except:
                     pass
     
-            elif len(linesplit) > 3 and linesplit[2].strip('_OCCUPANCY') in objlist:
+            elif len(linesplit) > 3 and linesplit[2][-10:] == '_OCCUPANCY' and linesplit[2][:-10] in objlist:
                 if 'Zone' not in node['rtypes']:
                    node['rtypes'] += ['Zone']
                 try:
-                    resdict[linesplit[0]] = [linesplit[2].strip('_OCCUPANCY'), zresdict[linesplit[3]]]
-                    if linesplit[2].strip('_OCCUPANCY') not in ztypes:
-                        ztypes.append(linesplit[2].strip('_OCCUPANCY'))
+                    resdict[linesplit[0]] = [linesplit[2][:-10], zresdict[linesplit[3]]]
+                    if linesplit[2][:-10] not in ztypes:
+                        ztypes.append(linesplit[2][:-10])
                     if zresdict[linesplit[3]] not in zrtypes:
                         zrtypes.append(zresdict[linesplit[3]])
                 except:
                     pass
-    
+            
+            elif len(linesplit) > 3 and linesplit[2][-4:] == '_AIR' and linesplit[2][:-4] in objlist:
+                if 'Zone' not in node['rtypes']:
+                   node['rtypes'] += ['Zone']
+                try:
+                    resdict[linesplit[0]] = [linesplit[2][:-4], zresdict[linesplit[3]]]
+                    if linesplit[2][:-4] not in ztypes:
+                        ztypes.append(linesplit[2][:-4])
+                    if zresdict[linesplit[3]] not in zrtypes:
+                        zrtypes.append(zresdict[linesplit[3]])
+                except:
+                    pass
+            
+            elif len(linesplit) > 3 and linesplit[2] in objlist:
+                if 'Zone' not in node['rtypes']:
+                   node['rtypes'] += ['Zone']
+                try:
+                    resdict[linesplit[0]] = [linesplit[2], zresdict[linesplit[3]]]
+                    if linesplit[2] not in ztypes:
+                        ztypes.append(linesplit[2])
+                    if zresdict[linesplit[3]] not in zrtypes:
+                        zrtypes.append(zresdict[linesplit[3]])
+                except:
+                    pass
+            
             elif len(linesplit) > 3 and linesplit[3] in lresdict:
                 if 'Linkage' not in node['rtypes']:
                    node['rtypes'] += ['Linkage']
@@ -332,13 +362,25 @@ def processf(pro_op, node):
                         enrtypes.append(enresdict[linesplit[3]])
                 except Exception as e:
                     print('ext', e)
-    
+            
     node.dsdoy = datetime.datetime(datetime.datetime.now().year, allresdict['Month'][0], allresdict['Day'][0]).timetuple().tm_yday
     node.dedoy = datetime.datetime(datetime.datetime.now().year, allresdict['Month'][-1], allresdict['Day'][-1]).timetuple().tm_yday
     node['dos'], node['resdict'], node['ctypes'], node['ztypes'], node['zrtypes'], node['ltypes'], node['lrtypes'], node['entypes'], node['enrtypes'] = dos, resdict, ctypes, ztypes, zrtypes, ltypes, lrtypes, entypes, enrtypes
     node['allresdict'] = allresdict
+
     if node.outputs['Results out'].links:
        node.outputs['Results out'].links[0].to_node.update() 
+
+    for o in bpy.data.objects:
+        if o.name.upper() in objlist:
+            o['enviresults'] = {}
+    for zres in resdict.items():
+        for o in bpy.data.objects:
+            if [o.name.upper(), 'Zone air heating (W)'] == zres[1]:            
+                o['enviresults']['Zone air heating (kWh)'] = sum(allresdict[zres[0]])*0.001
+            elif [o.name.upper(), 'Zone air cooling (W)'] == zres[1]:            
+                o['enviresults']['Zone air cooling (kWh)'] = sum(allresdict[zres[0]])*0.001
+
     
 def iprop(iname, idesc, imin, imax, idef):
     return(IntProperty(name = iname, description = idesc, min = imin, max = imax, default = idef))

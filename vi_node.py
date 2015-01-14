@@ -76,8 +76,6 @@ class ViLoc(bpy.types.Node, ViNodes):
     maxws = bpy.props.FloatProperty(name="", description="Max wind speed", min=0, max=90, default=0)
     minws = bpy.props.FloatProperty(name="", description="Min wind speed", min=0, max=90, default=0)
     avws = bpy.props.FloatProperty(name="", description="Average wind speed", min=0, max=90, default=0)
-#    dsdoy = bpy.props.IntProperty(name="", description="Start day", min=1, max=365, default=1)
-#    dedoy = bpy.props.IntProperty(name="", description="End day", min=1, max=365, default=365)
 
     def init(self, context):
         self['nodeid'] = nodeid(self)
@@ -167,9 +165,6 @@ class ViLiNode(bpy.types.Node, ViNodes):
         if self.edoy == self.sdoy:
             if self.ehour < self.shour:
                 self.ehour = self.shour
-#        simtime = self.starttime + frame*datetime.timedelta(seconds = 3600 * self.interval)
-#        solalt, solazi, beta, phi = vi_func.solarPosition(simtime.timetuple()[7], simtime.hour + (simtime.minute)*0.016666, scene['latitude'], scene['longitude'])
-#        Popen("gensky -ang {} {} {} > {}".format(solalt, solazi, node['skytypeparams'], retsky(frame, node, scene)), shell = True)
 
     analysismenu = bpy.props.EnumProperty(name="", description="Type of lighting analysis", items = analysistype, default = '0', update = nodeupdate)
     animmenu = bpy.props.EnumProperty(name="", description="Animation type", items=animtype, default = 'Static', update = nodeupdate)
@@ -401,9 +396,6 @@ class ViLiCNode(bpy.types.Node, ViNodes):
     def nodeupdate(self, context):
         nodecolour(self, self['exportstate'] != [str(x) for x in (self.analysismenu, self.bambuildmenu, self.buildstorey, self.animmenu)])
 
-#    interval = 0
-#    TZ = bpy.props.StringProperty(default = 'GMT')
-#    unit = bpy.props.StringProperty()
     hdr = bpy.props.BoolProperty(name="HDR", description="Export HDR panoramas", default=False, update = nodeupdate)
     analysistype = [('0', "BREEAM", "BREEAM HEA1 calculation"), ('1', "CfSH", "Code for Sustainable Homes calculation")] #, ('2', "LEED", "LEED EQ8.1 calculation"), ('3', "Green Star", "Green Star Calculation")]
     bambuildtype = [('0', "School", "School lighting standard"), ('1', "Higher Education", "Higher education lighting standard"), ('2', "Healthcare", "Healthcare lighting standard"), ('3', "Residential", "Residential lighting standard"), ('4', "Retail", "Retail lighting standard"), ('5', "Office & other", "Office and other space lighting standard")]
@@ -413,7 +405,6 @@ class ViLiCNode(bpy.types.Node, ViNodes):
     bambuildmenu = bpy.props.EnumProperty(name="", description="Type of building", items=bambuildtype, default = '0', update = nodeupdate)
     cusacc = bpy.props.StringProperty(name="", description="Custom Radiance simulation parameters", default="", update = nodeupdate)
     buildstorey = bpy.props.EnumProperty(items=[("0", "Single", "Single storey building"),("1", "Multi", "Multi-storey building")], name="", description="Building storeys", default="0", update = nodeupdate)
-#    linked = bpy.props.BoolProperty(default=False)
     
     def init(self, context):
         self['nodeid'] = nodeid(self)
@@ -695,11 +686,12 @@ class ViExEnNode(bpy.types.Node, ViNodes):
                     '12': ("Ventilation (l/s)", "Zone Ventilation rate (l/s)"), '13': (u'Ventilation (m\u00b3/h)', u'Zone Ventilation rate (m\u00b3/h)'), 
                     '14': (u'Infiltration (m\u00b3)',  u'Zone Infiltration (m\u00b3)'), '15': ('Infiltration (ACH)', 'Zone Infiltration rate (ACH)'), '16': (u'CO\u2082 (ppm)', u'Zone CO\u2082 concentration (ppm)'), 
                     '17': ("Heat loss (W)", "Ventilation Heat Loss (W)"), '18': (u'Flow (m\u00b3/s)', u'Linkage flow (m\u00b3/s)'), '19': ('Opening factor', 'Linkage Opening Factor'),
-                    '20': ("MRT (K)", "Mean Radiant Temperature (K)"), '21': ('Occupancy', 'Occupancy count'), '22': ("Humidity", "Zone Humidity"),}  
+                    '20': ("MRT (K)", "Mean Radiant Temperature (K)"), '21': ('Occupancy', 'Occupancy count'), '22': ("Humidity", "Zone Humidity"),
+                    '23': ("Fabric HB (W)", "Fabric convective heat balance"), '24': ("Air Heating", "Zone air heating"), '25': ("Air Cooling", "Zone air cooling")}  
         return [bpy.props.BoolProperty(name = rnu[str(rnum)][0], description = rnu[str(rnum)][1], default = False) for rnum in range(len(rnu))]                      
     
     (resat, resaws, resawd, resah, resasb, resasd, restt, restwh, restwc, reswsg, rescpp, rescpm, resvls, resvmh, resim, resiach, resco2, resihl, resl12ms, 
-     reslof, resmrt, resocc, resh) = resnameunits()
+     reslof, resmrt, resocc, resh, resfhb, ressah, ressac) = resnameunits()
         
     def init(self, context):
         self['nodeid'] = nodeid(self)
@@ -722,7 +714,7 @@ class ViExEnNode(bpy.types.Node, ViNodes):
         row.label(text = 'Results Category:')
         col = row.column()
         col.prop(self, "restype")
-        resdict = {'0': (0, "resat", "resaws", 0, "resawd", "resah", 0, "resasb", "resasd"), '1': (0, "restt", "resh", 0, "restwh", "restwc", 0, "reswsg"),\
+        resdict = {'0': (0, "resat", "resaws", 0, "resawd", "resah", 0, "resasb", "resasd"), '1': (0, "restt", "resh", 0, "restwh", "restwc", 0, "ressah", "ressac", 0,"reswsg", "resfhb"),\
         '2': (0, "rescpp", "rescpm", 0, 'resmrt', 'resocc'), '3': (0, "resim", "resiach", 0, "resco2", "resihl"), '4': (0, "resl12ms", "reslof")}
         for rprop in resdict[self.restype]:
             if not rprop:
@@ -749,8 +741,7 @@ class ViEnSimNode(bpy.types.Node, ViNodes):
     def init(self, context):
         self['nodeid'] = nodeid(self)
         self.inputs.new('ViEnC', 'Context in')
-        self.outputs.new('ViEnR', 'Results out')
-#        self.outputs['Results out'].hide = True   
+        self.outputs.new('ViEnR', 'Results out') 
         self['exportstate'] = ''
         nodecolour(self, 1) 
         
@@ -778,7 +769,8 @@ class ViEnSimNode(bpy.types.Node, ViNodes):
             socklink(self.outputs['Results out'], self['nodeid'].split('@')[1])        
     
     def sim(self):
-        nodecolour(self, 0)
+        self.dsdoy = self.inputs['Context in'].links[0].from_node.sdoy # (locnode.startmonthnode.sdoy
+        self.dedoy = self.inputs['Context in'].links[0].from_node.edoy
 
 class ViEnRFNode(bpy.types.Node, ViNodes):
     '''Node for EnergyPlus results file selection'''
@@ -1635,7 +1627,6 @@ class EnViWPCA(bpy.types.Node, EnViNodes):
     def epwrite(self):
         angs = (self.ang1,self.ang2, self.ang3, self.ang4, self.ang5, self.ang6, self.ang7, self.ang8, self.ang9, self.ang10, self.ang11, self.ang12)
         aparamvs = ['WPC Array'] + [wd for w, wd in enumerate(angs) if wd not in angs[:w]]
-#        bpy.data.node_groups[self['nodeid'].split('@')[1]]['enviparams']['wpcn'] = len(aparamvs) - 1 
         aparams = ['Name'] + ['Wind Direction {} (deg)'.format(w + 1) for w in range(len(aparamvs) - 1)]
         return (epentry('AirflowNetwork:MultiZone:WindPressureCoefficientArray', aparams, aparamvs), len(aparamvs) - 1)
         
