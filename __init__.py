@@ -2,7 +2,7 @@ bl_info = {
     "name": "VI-Suite v02",
     "author": "Ryan Southall",
     "version": (0, 2, 0),
-    "blender": (2, 7, 2),
+    "blender": (2, 7, 3),
     "api":"",
     "location": "Node Editor & 3D View > Properties Panel",
     "description": "Radiance/EnergyPlus exporter and results visualiser",
