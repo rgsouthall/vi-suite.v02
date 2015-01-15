@@ -44,7 +44,7 @@ class ViLoc(bpy.types.Node, ViNodes):
         (context.scene['latitude'], context.scene['longitude']) = epwlatilongi(context.scene, self) if self.loc == '1' and self.weather else (self.lat, self.long)
         nodecolour(self, any([link.to_node.bl_label in ('LiVi CBDM', 'EnVi Export') and self.loc != "1" for link in self.outputs['Location out'].links]))
         if self.loc == '1' and self.weather:
-            resdict, self['rtypes'], self['dos'], ctypes = {}, ['Time', 'Climate'], '0', []
+            resdict, allresdict, self['rtypes'], self['dos'], ctypes = {}, {}, ['Time', 'Climate'], '0', []
             resdict['0'] = ['Day of Simulation']
             for d in range(1, 366):
                 resdict['0'] += [str(d) for x in range(1,25)]  
@@ -55,12 +55,14 @@ class ViLoc(bpy.types.Node, ViNodes):
                 epwmatrix = [epwline.split(',') for epwline in epwlines] 
                 epwzip = zip(*epwmatrix)
                 epwcolumns = list(epwzip)
-                resdict['Month'], resdict['Day'], resdict['Hour'] = [epwcolumns[c] for c in range(1,4)]
+                allresdict['Month'], allresdict['Day'], allresdict['Hour'] = [epwcolumns[c] for c in range(1,4)]
+                allresdict['dos'] = [int(d/24) + 1 for d in range(8760)]
                 for c in {"Temperature ("+ u'\u00b0'+"C)": 6, 'Humidity (%)': 8, "Direct Solar (W/m"+u'\u00b2'+")": 14, "Diffuse Solar (W/m"+u'\u00b2'+")": 15, 
                           'Wind Direction (deg)': 20, 'Wind Speed (m/s)': 21}.items(): 
-                    resdict[str(c[1])] = ['Climate', c[0]] + list(epwcolumns[c[1]])
+                    resdict[str(c[1])] = ['Climate', c[0]]
+                    allresdict[str(c[1])] = list(epwcolumns[c[1]])
                     ctypes.append(c[0])
-                self['resdict'] = resdict 
+                self['resdict'], self['allresdict'] = resdict, allresdict 
                 self['ctypes'] = ctypes
             self.outputs['Location out']['valid'] = ['Location', 'EnVi Results']
         else:
@@ -76,7 +78,9 @@ class ViLoc(bpy.types.Node, ViNodes):
     maxws = bpy.props.FloatProperty(name="", description="Max wind speed", min=0, max=90, default=0)
     minws = bpy.props.FloatProperty(name="", description="Min wind speed", min=0, max=90, default=0)
     avws = bpy.props.FloatProperty(name="", description="Average wind speed", min=0, max=90, default=0)
-
+    dsdoy = bpy.props.IntProperty(name="", description="", min=1, max=365, default=1)
+    dedoy = bpy.props.IntProperty(name="", description="", min=1, max=365, default=365)
+    
     def init(self, context):
         self['nodeid'] = nodeid(self)
         bpy.data.node_groups[nodeid(self).split('@')[1]].use_fake_user = True
