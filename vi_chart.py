@@ -30,11 +30,7 @@ def timedata(datastring, timetype, stattype, months, days, dos, dnode, si, ei, S
         return(statdata(res, stattype))
 
 def chart_disp(chart_op, plt, dnode, rnodes, Sdate, Edate):
-#    rns = [dnode.inputs[axis].links[0].from_node for axis in ('X-axis', 'Y-axis 1', 'Y-axis 2', 'Y-axis 3') if dnode.inputs[axis].links]
-#    rds = [rn['resdict'] for rn in rns]
-#    ards = [rn['allresdict'] for rn in rns]
     rn = dnode.inputs['X-axis'].links[0].from_node
-#    rd = rn['resdict']
     ard = rn['allresdict']
     sm, sd, sh, em, ed, eh = Sdate.month, Sdate.day, Sdate.hour, Edate.month, Edate.day, Edate.hour
     (dm, dd, dh) = ([int(x) for x in ard['Month']], [int(x) for x in ard['Day']], [int(x) for x in ard['Hour']])
