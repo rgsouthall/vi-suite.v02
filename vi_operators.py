@@ -1079,7 +1079,7 @@ class NODE_OT_Shadow(bpy.types.Operator):
         scene['visimcontext'] = 'Shadow'
         if not scene.get('liparams'):
            scene['liparams'] = {} 
-        scene['liparams']['cp'], scene['liparams']['unit'] = simnode.cpoint, '% Sunlit'
+        scene['liparams']['cp'], scene['liparams']['unit'], scene['liparams']['type'] = simnode.cpoint, '% Sunlit', 'VI Shadow'
         simnode.export(scene)
         (scene.fs, scene.fe) = (scene.frame_current, scene.frame_current) if simnode.animmenu == 'Static' else (scene.frame_start, scene.frame_end)
         cmap('grey')
@@ -1105,7 +1105,6 @@ class NODE_OT_Shadow(bpy.types.Operator):
 
         for o in [scene.objects[on] for on in scene['shadc']]:
             o['omin'], o['omax'], o['oave'] = [0] * fdiff, [100] * fdiff, [100] * fdiff
-            ci = 1
             bm = bmesh.new()
             bm.from_mesh(o.data)
             bm.transform(o.matrix_world)  
@@ -1119,18 +1118,16 @@ class NODE_OT_Shadow(bpy.types.Operator):
                 cindex = bm.faces.layers.int['cindex']
                 [bm.faces.layers.float.new('res{}'.format(fi)) for fi in frange]
                 cfaces = [f for f in bm.faces if o.data.materials[f.material_index].mattype == '2']
-                for f in [f for f in cfaces]:
-                    f[cindex] = ci
-                    ci+= 1
+                for ci, f in enumerate([f for f in cfaces]):
+                    f[cindex] = ci + 1
             else:               
                 bm.verts.layers.int.new('cindex')
                 cindex = bm.verts.layers.int['cindex'] 
                 bm.verts.layers.int.new('cindex')
                 [bm.verts.layers.float.new('res{}'.format(fi)) for fi in frange]
                 cverts = [v for v in bm.verts if any([o.data.materials[f.material_index].mattype == '2' for f in v.link_faces])]
-                for v in [v for v in cverts]:
+                for ci, v in enumerate([v for v in cverts]):
                     v[cindex] = ci
-                    ci+= 1
                     
             for fi, frame in enumerate(frange):
                 scene.frame_set(frame)
@@ -1152,6 +1149,6 @@ class NODE_OT_Shadow(bpy.types.Operator):
         
         for fi, frame in enumerate(frange):
             simnode['minres']['{}'.format(frame)], simnode['maxres']['{}'.format(frame)], simnode['avres']['{}'.format(frame)] = 0, 100, sum([scene.objects[on]['oave'][fi] for on in scene['shadc']])/len(scene['shadc'])
-        scene.vi_leg_max, scene.vi_leg_max = 100, 0
+        scene.vi_leg_max, scene.vi_leg_min = 100, 0
         scene.frame_set(scene.fs)
         return {'FINISHED'}

@@ -452,6 +452,8 @@ def vertarea(mesh, vert):
             for oface in ofaces:
                 ovs.append([i for i in face.verts if i in oface.verts])
             if len(ovs) == 1:
+                if hasattr(mesh.verts, "ensure_lookup_table"):
+                    mesh.verts.ensure_lookup_table()
                 sedgevs = (vert.index, [v.index for v in fvs if v not in ovs][0])
                 sedgemp = mathutils.Vector([((mesh.verts[sedgevs[0]].co)[i] + (mesh.verts[sedgevs[1]].co)[i])/2 for i in range(3)])
                 eps = [mathutils.geometry.intersect_line_line(face.calc_center_median(), ofaces[0].calc_center_median(), ovs[0][0].co, ovs[0][1].co)[1]] + [sedgemp]
