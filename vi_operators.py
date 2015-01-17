@@ -1,6 +1,6 @@
 import bpy, bpy_extras, sys, datetime, mathutils, os, time, bmesh, shutil
 from os import rename
-from numpy import arange, array, digitize, frombuffer, uint8
+from numpy import arange, frombuffer, uint8
 import bpy_extras.io_utils as io_utils
 from subprocess import Popen, PIPE
 from collections import OrderedDict
@@ -20,7 +20,7 @@ from .livi_calc  import li_calc, resapply
 from .vi_display import li_display, li_compliance, linumdisplay, spnumdisplay, li3D_legend, viwr_legend
 from .envi_export import enpolymatexport, pregeo
 from .envi_mat import envi_materials, envi_constructions
-from .vi_func import processf, livisimacc, solarPosition, skframe, wr_axes, clearscene, framerange, viparams, selobj, objmode, nodecolour, li_calcob, cmap, vertarea
+from .vi_func import processf, livisimacc, solarPosition, wr_axes, clearscene, framerange, viparams, objmode, nodecolour, cmap, vertarea
 from .vi_chart import chart_disp
 from .vi_gen import vigen
 
@@ -1148,6 +1148,5 @@ class NODE_OT_Shadow(bpy.types.Operator):
         for fi, frame in enumerate(frange):
             simnode['minres']['{}'.format(frame)], simnode['maxres']['{}'.format(frame)], simnode['avres']['{}'.format(frame)] = 0, 100, sum([scene.objects[on]['oave'][fi] for on in scene['shadc']])/len(scene['shadc'])
         scene.vi_leg_max, scene.vi_leg_max = 100, 0
-
         scene.frame_set(scene.fs)
         return {'FINISHED'}

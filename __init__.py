@@ -21,12 +21,12 @@ if "bpy" in locals():
 else:
     from .vi_node import vinode_categories, envinode_categories
     from .envi_mat import envi_materials, envi_constructions
-    from .vi_func import iprop, bprop, eprop, fprop, sprop, fvprop, sunpath1
-    from .vi_display import li_display
+    from .vi_func import iprop, bprop, eprop, fprop, sprop, fvprop, sunpath1, radmat
     from .vi_operators import *
     from .vi_ui import *
 
 import sys, os, inspect, bpy, nodeitems_utils, bmesh, shutil
+from numpy import array, digitize
 
 epversion = "8-2-0"
 addonpath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -145,7 +145,6 @@ def register():
     Object.envi_hvaccaf = fprop("", "Heating air flow rate", 0, 60, 1)
     Object.envi_hvacscc = fprop("", "Sensible cooling capacity", 0, 10000, 1000)
     Object.envi_hvacoam = eprop([('0', 'None', 'None'), ('1', 'Flow/Zone', 'Flow/Zone'), ('2', 'Flow/Person', 'Flow/Person'), ('3', 'Flow/Area', 'Flow/Area'), ('4', 'Sum', 'Sum'), ('5', 'Maximum ', 'Maximum'), ('6', 'ACH/Detailed', 'ACH/Detailed')], '', "Cooling limit type", '2')
-#    Object.envi_hvacof = fprop("", "Outdoor air flow rate", 0, 10, 0.008)
     Object.envi_hvacfrp = fprop("", "Flow rate per person", 0, 1, 0.008)
     Object.envi_hvacfrzfa = fprop("", "Flow rate per zone area", 0, 1, 0.008)
     Object.envi_hvacfrz = fprop('m{}/s'.format(u'\u00b3'), "Flow rate per zone", 0, 100, 0.1)
@@ -224,7 +223,7 @@ def register():
                                  ("5", "ACH", "ACH flow rate"), ("6", "l/s/p", 'Litres per second per person')], "", "The type of zone infiltration specification", "0")
 
 # LiVi material definitions
-    Material.radmat = vi_func.radmat
+    Material.radmat = radmat
     Material.radmatdict = {'0': ['radcolour', 0, 'radrough', 'radspec'], '1': ['radcolour'], '2': ['radcolour', 0, 'radior'], '3': ['radcolour', 0, 'radspec', 'radrough', 0, 'radtrans',  'radtranspec'], '4': ['radcolour'], '5': ['radcolour', 0, 'radintensity'], '6': ['radcolour', 0, 'radrough', 'radspec'], '7': []}
 
     radtypes = [('0', 'Plastic', 'Plastic Radiance material'), ('1', 'Glass', 'Glass Radiance material'), ('2', 'Dielectric', 'Dialectric Radiance material'),

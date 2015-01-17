@@ -11,7 +11,6 @@ except:
     mp = 0
 
 dtdf = datetime.date.fromordinal
-#s = 60
 
 def cmap(cm):
     cmdict = {'hot': 'livi', 'grey': 'shad'}
@@ -110,8 +109,6 @@ def retelaarea(node):
     if outosocks or inosocks:
         elaarea = max([facearea(bpy.data.objects[sock.node.zone], bpy.data.objects[sock.node.zone].data.polygons[int(sock.sn)]) for sock in outosocks + inosocks])
         node["_RNA_UI"] = {"ela": {"max":elaarea}}
-#    except Exception as e:
-#        print(e)
         
 def objmode():
     if bpy.context.active_object and bpy.context.active_object.type == 'MESH' and not bpy.context.active_object.hide:
@@ -273,7 +270,6 @@ def processf(pro_op, node):
                         objlist.append(linesplit[2].strip('_AIR'))
                     elif linesplit[3] in zresdict and linesplit[2] not in objlist and 'ExtNode' not in linesplit[2]:
                         objlist.append(linesplit[2])
-#                    allresdict[linesplit[0]] = ['{} {}'.format(linesplit[2], linesplit[-1].strip(' !Hourly'))]
                     allresdict[linesplit[0]] = []
             elif not intro and len(linesplit) == 2:
                 allresdict[linesplit[0]].append(float(linesplit[1]))
@@ -283,14 +279,7 @@ def processf(pro_op, node):
                     allresdict['Day'].append(int(linesplit[3]))
                     allresdict['Hour'].append(int(linesplit[5]))
                     allresdict['dos'].append(int(linesplit[1]))
-                    
-#            if linesplit[0] in resdict:
-#                resdict[linesplit[0]].append(linesplit[1])
-#                if linesplit[0] == dos:
-#                    resdict['Month'].append(int(linesplit[2]))
-#                    resdict['Day'].append(int(linesplit[3]))
-#                    resdict['Hour'].append(int(linesplit[5]))
-    
+                        
             elif len(linesplit) > 3 and linesplit[2] == 'Day of Simulation[]':
                 resdict[linesplit[0]], allresdict['Month'],  allresdict['Day'], allresdict['Hour'], allresdict['dos'], dos, node['rtypes'] = ['Day of Simulation'], [], [], [], [], linesplit[0], ['Time']
     
@@ -367,7 +356,6 @@ def processf(pro_op, node):
     node.dedoy = datetime.datetime(datetime.datetime.now().year, allresdict['Month'][-1], allresdict['Day'][-1]).timetuple().tm_yday
     node['dos'], node['resdict'], node['ctypes'], node['ztypes'], node['zrtypes'], node['ltypes'], node['lrtypes'], node['entypes'], node['enrtypes'] = dos, resdict, ctypes, ztypes, zrtypes, ltypes, lrtypes, entypes, enrtypes
     node['allresdict'] = allresdict
-
     if node.outputs['Results out'].links:
        node.outputs['Results out'].links[0].to_node.update() 
 
@@ -381,7 +369,6 @@ def processf(pro_op, node):
             elif [o.name.upper(), 'Zone air cooling (W)'] == zres[1]:            
                 o['enviresults']['Zone air cooling (kWh)'] = sum(allresdict[zres[0]])*0.001
 
-    
 def iprop(iname, idesc, imin, imax, idef):
     return(IntProperty(name = iname, description = idesc, min = imin, max = imax, default = idef))
 def eprop(eitems, ename, edesc, edef):
@@ -409,7 +396,6 @@ def nfvprop(fvname, fvattr, fvdef, fvsub):
 
 def boundpoly(obj, mat, poly, enng):
     if mat.envi_boundary:
-#        polyloc = obj.matrix_world*mathutils.Vector(poly.center)
         nodes = [node for node in enng.nodes if hasattr(node, 'zone') and node.zone == obj.name]
         for node in nodes:
             insock = node.inputs['{}_{}_b'.format(mat.name, poly.index)]
@@ -417,26 +403,20 @@ def boundpoly(obj, mat, poly, enng):
             if insock.links:
                 bobj = bpy.data.objects[insock.links[0].from_node.zone]
                 bpoly = bobj.data.polygons[int(insock.links[0].from_socket.name.split('_')[-2])]
-#                bpolyloc = bobj.matrix_world*mathutils.Vector(bpoly.center)
                 if bobj.data.materials[bpoly.material_index] == mat:# and max(bpolyloc - polyloc) < 0.001 and abs(bpoly.area - poly.area) < 0.01:
                     return(("Surface", node.inputs['{}_{}_b'.format(mat.name, poly.index)].links[0].from_node.zone+'_'+str(bpoly.index), "NoSun", "NoWind"))
         
             elif outsock.links:
                 bobj = bpy.data.objects[outsock.links[0].to_node.zone]
                 bpoly = bobj.data.polygons[int(outsock.links[0].to_socket.name.split('_')[-2])]
-#                bpolyloc = bobj.matrix_world*mathutils.Vector(bpoly.center)
                 if bobj.data.materials[bpoly.material_index] == mat:# and max(bpolyloc - polyloc) < 0.001 and abs(bpoly.area - poly.area) < 0.01:
                     return(("Surface", node.outputs['{}_{}_b'.format(mat.name, poly.index)].links[0].to_node.zone+'_'+str(bpoly.index), "NoSun", "NoWind"))
-#            except Exception as e:
-#                print(e)
             return(("Outdoors", "", "SunExposed", "WindExposed"))
-#        else:
-#            return(("Outdoors", "", "SunExposed", "WindExposed"))
+
     elif mat.envi_thermalmass:
         return(("Adiabatic", "", "NoSun", "NoWind"))
     else:
         return(("Outdoors", "", "SunExposed", "WindExposed"))
-
 
 def objvol(op, obj):
     bm , floor, roof, mesh = bmesh.new(), [], [], obj.data
@@ -449,16 +429,8 @@ def objvol(op, obj):
     zfloor = list(zip(*floor))
     if not zfloor and op:
         op.report({'INFO'},"Zone has no floor area")
-#    else:
-#        taf = sum(zfloor[0])
-#    avhf = sum([(zfloor[0][i]*zfloor[1][i])/taf for i in range(len(zfloor[0]))])
-#    zroof = list(zip(*roof))
-#    tar = sum(zroof[0])
-#    avhr = sum([(zroof[0][i]*zroof[1][i])/tar for i in range(len(zroof[0]))])
 
     return(bm.calc_volume()*obj.scale[0]*obj.scale[1]*obj.scale[2])
-#    return((avhr - avhf)*(taf+tar)*obj.scale[0]*obj.scale[1]*obj.scale[2]/2)
-
 
 def ceilheight(obj, vertz):
     mesh = obj.data
@@ -665,7 +637,6 @@ def retobjs(otypes):
 
 def viewdesc(context):
     region = context.region
-#    (width, height) = [getattr(region, s) for s in ('width', 'height')]
     width, height = region.width, region.height
     mid_x, mid_y = width/2, height/2
     return(mid_x, mid_y, width, height)
@@ -679,7 +650,6 @@ def skfpos(o, frame, vis):
     maxz = max([vco[2] for vco in vcos])
     minz = min([vco[2] for vco in vcos])
     return mathutils.Vector(((maxx + minx) * 0.5, (maxy + miny) * 0.5, (maxz + minz) * 0.5))
-#    return mathutils.Vector((sum([vco[0] for vco in vcos])/len(vcos), sum([vco[1] for vco in vcos])/len(vcos), sum([vco[2] for vco in vcos])/len(vcos)))
 
 def selmesh(sel):
     bpy.ops.object.mode_set(mode = 'EDIT')

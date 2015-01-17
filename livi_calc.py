@@ -306,7 +306,6 @@ def resapply(calc_op, res, svres, simnode, connode, geonode, frames):
                 bpy.ops.object.select_all(action = 'DESELECT')
                 eof, eov, hours, scene.objects.active = sof + len(geo['cfaces']), sov + len(geo['cverts']), len(res[0]), None
                 oarea = sum(geo['lisenseareas'])
-#                ofaces = [face for face in geo.data.polygons if geo.data.materials[face.material_index].mattype == '1']
                 geo['wattres'] = {str(frame):[0 for x in range(len(res[0]))]}
                 for i in range(hours):
                     if geonode.cpoint == '0':

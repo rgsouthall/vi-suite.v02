@@ -17,10 +17,10 @@
 # ##### END GPL LICENSE BLOCK #####
 
 
-import bpy, glob, os, inspect, sys, datetime, time
+import bpy, glob, os, inspect, sys, datetime
 from subprocess import Popen
 from nodeitems_utils import NodeCategory, NodeItem
-from .vi_func import objvol, facearea, socklink, newrow, epwlatilongi, nodeid, nodeinputs, remlink, rettimes, epentry, sockhide, nodecolour, epschedwrite, retelaarea
+from .vi_func import objvol, socklink, newrow, epwlatilongi, nodeid, nodeinputs, remlink, rettimes, epentry, sockhide, nodecolour, epschedwrite, retelaarea
 
 
 class ViNetwork(bpy.types.NodeTree):
