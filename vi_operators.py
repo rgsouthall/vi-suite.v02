@@ -817,12 +817,15 @@ class NODE_OT_SunPath(bpy.types.Operator):
         spathob.location, spathob.name,  spathob['VIType'], spathmesh = (0, 0, 0), "SPathMesh", "SPathMesh", spathob.data
         bm = bmesh.new()
         bm.from_mesh(spathmesh)
+
         for doy in range(0, 363):
             if (doy-4)%7 == 0:
                 for hour in range(1, 25):
                     ([solalt, solazi]) = solarPosition(doy, hour, scene['latitude'], scene['longitude'])[2:]
                     bm.verts.new().co = [-(sd-(sd-(sd*cos(solalt))))*sin(solazi), -(sd-(sd-(sd*cos(solalt))))*cos(solazi), sd*sin(solalt)]
         for v in range(24, len(bm.verts)):
+            if hasattr(bm.verts, "ensure_lookup_table"):
+                bm.verts.ensure_lookup_table()
             if bm.verts[v].co.z > 0 or bm.verts[v - 24].co.z > 0:                
                 bm.edges.new((bm.verts[v], bm.verts[v - 24]))
             if v in range(1224, 1248):
@@ -830,9 +833,11 @@ class NODE_OT_SunPath(bpy.types.Operator):
                     bm.edges.new((bm.verts[v], bm.verts[v - 1224]))
                     
         for doy in (79, 172, 355):
-            for hour in range(1, 25):
+            for hour in range(1, 25):                
                 ([solalt, solazi]) = solarPosition(doy, hour, scene['latitude'], scene['longitude'])[2:]                
                 bm.verts.new().co = [-(sd-(sd-(sd*cos(solalt))))*sin(solazi), -(sd-(sd-(sd*cos(solalt))))*cos(solazi), sd*sin(solalt)]
+                if hasattr(bm.verts, "ensure_lookup_table"):
+                    bm.verts.ensure_lookup_table()
                 if bm.verts[-1].co.z >= 0 and doy in (172, 355):
                     numpos['{}-{}'.format(doy, hour)] = bm.verts[-1].co[:]
                 if hour != 1:
