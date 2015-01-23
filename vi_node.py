@@ -52,18 +52,15 @@ class ViLoc(bpy.types.Node, ViNodes):
                 self[rtype] = []
             with open(self.weather, 'r') as epwfile:
                 epwlines = epwfile.readlines()[8:]
-                epwmatrix = [epwline.split(',') for epwline in epwlines] 
-                epwzip = zip(*epwmatrix)
-                epwcolumns = list(epwzip)
+                epwcolumns = list(zip(*[epwline.split(',') for epwline in epwlines]))
                 allresdict['Month'], allresdict['Day'], allresdict['Hour'] = [epwcolumns[c] for c in range(1,4)]
-                allresdict['dos'] = [int(d/24) + 1 for d in range(8760)]
+                allresdict['dos'] = [int(d/24) + 1 for d in range(len(epwlines))]
                 for c in {"Temperature ("+ u'\u00b0'+"C)": 6, 'Humidity (%)': 8, "Direct Solar (W/m"+u'\u00b2'+")": 14, "Diffuse Solar (W/m"+u'\u00b2'+")": 15, 
                           'Wind Direction (deg)': 20, 'Wind Speed (m/s)': 21}.items(): 
                     resdict[str(c[1])] = ['Climate', c[0]]
                     allresdict[str(c[1])] = list(epwcolumns[c[1]])
                     ctypes.append(c[0])
-                self['resdict'], self['allresdict'] = resdict, allresdict 
-                self['ctypes'] = ctypes
+                self['resdict'], self['allresdict'], self['ctypes'] = resdict, allresdict, ctypes 
             self.outputs['Location out']['valid'] = ['Location', 'EnVi Results']
         else:
             self.outputs['Location out']['valid'] = ['Location'] 

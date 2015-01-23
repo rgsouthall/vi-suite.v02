@@ -360,13 +360,13 @@ def processf(pro_op, node):
        node.outputs['Results out'].links[0].to_node.update() 
 
     for o in bpy.data.objects:
-        if o.name.upper() in objlist:
+        if 'EN_'+o.name.upper() in objlist:
             o['enviresults'] = {}
     for zres in resdict.items():
         for o in bpy.data.objects:
-            if [o.name.upper(), 'Zone air heating (W)'] == zres[1]:            
+            if ['EN_'+o.name.upper(), 'Zone air heating (W)'] == zres[1]:            
                 o['enviresults']['Zone air heating (kWh)'] = sum(allresdict[zres[0]])*0.001
-            elif [o.name.upper(), 'Zone air cooling (W)'] == zres[1]:            
+            elif ['EN_'+o.name.upper(), 'Zone air cooling (W)'] == zres[1]:            
                 o['enviresults']['Zone air cooling (kWh)'] = sum(allresdict[zres[0]])*0.001
 
 def iprop(iname, idesc, imin, imax, idef):

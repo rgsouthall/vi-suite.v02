@@ -101,7 +101,7 @@ def wupdate(self, context):
 def legupdate(self, context):
     scene = context.scene
     for frame in range(scene.fs, scene.fe + 1):
-        for i, o in enumerate([o for o in scene.objects if o.get('lires')]):
+        for o in [o for o in scene.objects if o.get('lires')]:
             bm = bmesh.new()
             bm.from_mesh(o.data)
             livires = bm.faces.layers.float['res{}'.format(frame)] if bm.faces.layers.float.get('res{}'.format(frame)) else bm.verts.layers.float['res{}'.format(frame)]

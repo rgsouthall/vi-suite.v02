@@ -944,94 +944,93 @@ class NODE_OT_WindRose(bpy.types.Operator):
 
     def invoke(self, context, event):
         scene = context.scene
+        simnode = bpy.data.node_groups[self.nodeid.split('@')[1]].nodes[self.nodeid.split('@')[0]]
         if viparams(self, scene):
             return {'CANCELLED'}
-        if mp == 1:
-            simnode = bpy.data.node_groups[self.nodeid.split('@')[1]].nodes[self.nodeid.split('@')[0]]
-            simnode.export()
-            locnode = simnode.inputs['Location in'].links[0].from_node
-            scene.resnode, scene.restree = simnode.name, self.nodeid.split('@')[1]            
-            scene.vi_display, scene.sp_disp_panel, scene.li_disp_panel, scene.lic_disp_panel, scene.en_disp_panel, scene.ss_disp_panel, scene.wr_disp_panel = 1, 0, 0, 0, 0, 0, 1
-            context.scene['visimcontext'] = 'Wind'
-
-            with open(locnode.weather, "r") as epwfile:
-                if simnode.startmonth > simnode.endmonth:
-                    self.report({'ERROR'},"Start month is later than end month")
-                    return {'FINISHED'}
-                else:
-                    wvals = [line.split(",")[20:22] for l, line in enumerate(epwfile.readlines()) if l > 7 and simnode.startmonth <= int(line.split(",")[1]) <= simnode.endmonth]
-                    simnode['maxres'], simnode['minres'],  simnode['avres']= max([float(w[1]) for w in wvals]), min([float(w[1]) for w in wvals]), sum([float(w[1]) for w in wvals])/len(wvals)
-
-            awd, aws, (fig, ax) = [float(val[0]) for val in wvals], [float(val[1]) for val in wvals], wr_axes()
-            binvals = arange(0,int(ceil(max(aws))),2)
-            simnode['nbins'] = len(binvals)
-
-            if simnode.wrtype == '0':
-                ax.bar(awd, aws, bins=binvals, normed=True, opening=0.8, edgecolor='white')
-            if simnode.wrtype == '1':
-                ax.box(awd, aws, bins=binvals, normed=True)
-            if simnode.wrtype == '2':
-                ax.contourf(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
-            if simnode.wrtype == '3':
-                ax.contourf(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
-                ax.contour(awd, aws, bins=binvals, normed=True, colors='black')
-            if simnode.wrtype == '4':
-                ax.contour(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
-
-            if str(sys.platform) != 'win32':
-                plt.savefig(scene['viparams']['newdir']+'/disp_wind.png', dpi = (150), transparent=False)
-                if 'disp_wind.png' not in [im.name for im in bpy.data.images]:
-                    bpy.data.images.load(scene['viparams']['newdir']+'/disp_wind.png')
-                else:
-                    bpy.data.images['disp_wind.png'].filepath = scene['viparams']['newdir']+'/disp_wind.png'
-                    bpy.data.images['disp_wind.png'].reload()
-
-            # Below is a workaround for the matplotlib/blender png bug
-            else:
-                canvas = FigureCanvasAgg(fig)
-                canvas.draw()
-                pixbuffer, pixels = canvas.buffer_rgba(), []
-                [w, h] = [int(d) for d in fig.bbox.bounds[2:]]
-                pixarray = frombuffer(pixbuffer, uint8)
-                pixarray.shape = h, w, 4
-                pixels = pixarray[::-1].flatten()/255
-
-                if 'disp_wind.png' not in [im.name for im in bpy.data.images]:
-                    wrim = bpy.data.images.new('disp_wind.png', height = h, width = w)
-                    wrim.file_format = 'PNG'
-                    wrim.filepath = os.path.join(scene['viparams']['newdir'], wrim.name)
-                else:
-                    wrim = bpy.data.images['disp_wind.png']
-                wrim.pixels = pixels
-                wrim.update()
-                wrim.save()
-                wrim.reload()
-
-            plt.savefig(scene['viparams']['newdir']+'/disp_wind.svg')
-
-            if 'Wind_Plane' not in [ob.get('VIType') for ob in bpy.context.scene.objects]:
-                bpy.ops.mesh.primitive_plane_add(enter_editmode=False, location=(0.0, 0.0, 0.0))
-                bpy.context.active_object['VIType'] = 'Wind_Plane'
-                wind_mat = bpy.data.materials.new('Wind_Rose')
-                tex = bpy.data.textures.new(type = 'IMAGE', name = 'Wind_Tex')
-                tex.image = bpy.data.images['disp_wind.png']
-                wind_mat.texture_slots.add()
-                wind_mat.texture_slots[0].texture = tex
-                wind_mat.texture_slots[0].use_map_alpha = True
-                bpy.context.active_object.name = "Wind_Plane"
-                bpy.ops.object.material_slot_add()
-                bpy.context.active_object.material_slots[0].material = wind_mat
-                bpy.context.active_object.data.uv_textures.new()
-                bpy.context.active_object.data.uv_textures[0].data[0].image = bpy.data.images['disp_wind.png']
-                bpy.context.active_object.scale = (100, 100, 100)
-                wind_mat.use_transparency = False
-                wind_mat.transparency_method = 'Z_TRANSPARENCY'
-                wind_mat.alpha = 0.0
-            bpy.ops.view3d.wrlegdisplay('INVOKE_DEFAULT')
-            return {'FINISHED'}
-        else:
+        if simnode.startmonth > simnode.endmonth:
+            self.report({'ERROR'},"Start month is later than end month")
+            return {'CANCELLED'}
+        if not mp:
             self.report({'ERROR'},"There is something wrong with your matplotlib installation")
-            return {'FINISHED'}
+            return {'FINISHED'}        
+           
+        simnode.export()
+        locnode = simnode.inputs['Location in'].links[0].from_node
+        scene.resnode, scene.restree = simnode.name, self.nodeid.split('@')[1]            
+        scene.vi_display, scene.sp_disp_panel, scene.li_disp_panel, scene.lic_disp_panel, scene.en_disp_panel, scene.ss_disp_panel, scene.wr_disp_panel = 1, 0, 0, 0, 0, 0, 1
+        context.scene['visimcontext'] = 'Wind'
+        mon = [int(mo) for mo in locnode['allresdict']['Month']]
+        awd = [float(wd) for mi, wd in enumerate(locnode['allresdict']['20']) if simnode.startmonth <= mon[mi] <= simnode.endmonth]
+        aws = [float(ws) for mi, ws in enumerate(locnode['allresdict']['21']) if simnode.startmonth <= mon[mi] <= simnode.endmonth]
+        simnode['maxres'], simnode['minres'], simnode['avres']= max(aws), min(aws), sum(aws)/len(aws)
+        (fig, ax) = wr_axes()
+        binvals = arange(0,int(ceil(max(aws))),2)
+        simnode['nbins'] = len(binvals)
+
+        if simnode.wrtype == '0':
+            ax.bar(awd, aws, bins=binvals, normed=True, opening=0.8, edgecolor='white')
+        if simnode.wrtype == '1':
+            ax.box(awd, aws, bins=binvals, normed=True)
+        if simnode.wrtype == '2':
+            ax.contourf(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
+        if simnode.wrtype == '3':
+            ax.contourf(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
+            ax.contour(awd, aws, bins=binvals, normed=True, colors='black')
+        if simnode.wrtype == '4':
+            ax.contour(awd, aws, bins=binvals, normed=True, cmap=cm.hot)
+
+        if str(sys.platform) != 'win32':
+            plt.savefig(scene['viparams']['newdir']+'/disp_wind.png', dpi = (150), transparent=False)
+            if 'disp_wind.png' not in [im.name for im in bpy.data.images]:
+                bpy.data.images.load(scene['viparams']['newdir']+'/disp_wind.png')
+            else:
+                bpy.data.images['disp_wind.png'].filepath = scene['viparams']['newdir']+'/disp_wind.png'
+                bpy.data.images['disp_wind.png'].reload()
+
+        # Below is a workaround for the matplotlib/blender png bug
+        else:
+            canvas = FigureCanvasAgg(fig)
+            canvas.draw()
+            pixbuffer, pixels = canvas.buffer_rgba(), []
+            [w, h] = [int(d) for d in fig.bbox.bounds[2:]]
+            pixarray = frombuffer(pixbuffer, uint8)
+            pixarray.shape = h, w, 4
+            pixels = pixarray[::-1].flatten()/255
+
+            if 'disp_wind.png' not in [im.name for im in bpy.data.images]:
+                wrim = bpy.data.images.new('disp_wind.png', height = h, width = w)
+                wrim.file_format = 'PNG'
+                wrim.filepath = os.path.join(scene['viparams']['newdir'], wrim.name)
+            else:
+                wrim = bpy.data.images['disp_wind.png']
+            wrim.pixels = pixels
+            wrim.update()
+            wrim.save()
+            wrim.reload()
+
+        plt.savefig(scene['viparams']['newdir']+'/disp_wind.svg')
+
+        if 'Wind_Plane' not in [ob.get('VIType') for ob in bpy.context.scene.objects]:
+            bpy.ops.mesh.primitive_plane_add(enter_editmode=False, location=(0.0, 0.0, 0.0))
+            bpy.context.active_object['VIType'] = 'Wind_Plane'
+            wind_mat = bpy.data.materials.new('Wind_Rose')
+            tex = bpy.data.textures.new(type = 'IMAGE', name = 'Wind_Tex')
+            tex.image = bpy.data.images['disp_wind.png']
+            wind_mat.texture_slots.add()
+            wind_mat.texture_slots[0].texture = tex
+            wind_mat.texture_slots[0].use_map_alpha = True
+            bpy.context.active_object.name = "Wind_Plane"
+            bpy.ops.object.material_slot_add()
+            bpy.context.active_object.material_slots[0].material = wind_mat
+            bpy.context.active_object.data.uv_textures.new()
+            bpy.context.active_object.data.uv_textures[0].data[0].image = bpy.data.images['disp_wind.png']
+            bpy.context.active_object.scale = (100, 100, 100)
+            wind_mat.use_transparency = False
+            wind_mat.transparency_method = 'Z_TRANSPARENCY'
+            wind_mat.alpha = 0.0
+        bpy.ops.view3d.wrlegdisplay('INVOKE_DEFAULT')
+        return {'FINISHED'}
+
 
 class VIEW3D_OT_WRLegDisplay(bpy.types.Operator):
     '''Display results legend and stats in the 3D View'''
