@@ -217,13 +217,13 @@ class ViLiNode(bpy.types.Node, ViNodes):
             elif self.skymenu == '4':
                 row = layout.row()
                 row.label("HDR file:")
-                row.operator('node.hdrselect', text = 'HDR select')
+                row.operator('node.hdrselect', text = 'HDR select').nodeid = self['nodeid']
                 row = layout.row()
                 row.prop(self, 'hdrname')
             elif self.skymenu == '5':
                 row = layout.row()
                 row.label("Radiance file:")
-                row.operator('node.skyselect', text = 'Sky select')
+                row.operator('node.skyselect', text = 'Sky select').nodeid = self['nodeid']
                 row = layout.row()
                 row.prop(self, 'skyname')
         row = layout.row()
