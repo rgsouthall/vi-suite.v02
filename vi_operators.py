@@ -994,7 +994,7 @@ class NODE_OT_Shadow(bpy.types.Operator):
 
     def invoke(self, context, event):
         scene = context.scene
-        scene['shadc'] = [ob.name for ob in scene.objects if ob.type == 'MESH' and not ob.hide and len([f for f in ob.data.polygons if ob.data.materials[f.material_index].mattype == '2'])]
+        scene['shadc'] = [ob.name for ob in scene.objects if ob.type == 'MESH' and not ob.hide and ob.data.materials and [f for f in ob.data.polygons if ob.data.materials[f.material_index].mattype == '2']]
         
         if not scene['shadc']:
             self.report({'ERROR'},"No objects have a VI Shadow material attached.")
