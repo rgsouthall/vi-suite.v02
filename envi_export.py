@@ -8,12 +8,7 @@ def enpolymatexport(exp_op, node, locnode, em, ec):
         scene.update()
     en_epw = open(locnode.weather, "r")
     en_idf = open(scene['viparams']['idf_file'], 'w')
-    
-#    try:
-    enng = [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network'][0] if [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network'] else 0
-#    except:
-#        exp_op.report({'ERROR'}, 'No EnVi node tree found. Have you exported the EnVi Geometry?')
-#        return
+    enng = [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network'][0]
     en_idf.write("!- Blender -> EnergyPlus\n!- Using the EnVi export scripts\n!- Author: Ryan Southall\n!- Date: {}\n\nVERSION,{};\n\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), scene.epversion))
 
     params = ('Name', 'North Axis (deg)', 'Terrain', 'Loads Convergence Tolerance Value', 'Temperature Convergence Tolerance Value (deltaC)',
@@ -233,9 +228,8 @@ def enpolymatexport(exp_op, node, locnode, em, ec):
         if (hcoiobj.obj.envi_occtype == "1" and hcoiobj.obj.envi_occinftype != 0) or (hcoiobj.obj.envi_occtype != "1" and hcoiobj.obj.envi_inftype != 0):
             en_idf.write(hcoiobj.zisched())
 
-    if enng:
-        for snode in [snode for snode in enng.nodes if snode.bl_idname == 'EnViSched' and snode.outputs['Schedule'].is_linked]:
-            en_idf.write(snode.epwrite())
+    for snode in [snode for snode in enng.nodes if snode.bl_idname == 'EnViSched' and snode.outputs['Schedule'].is_linked]:
+        en_idf.write(snode.epwrite())
 
     en_idf.write("\n!-   ===========  ALL OBJECTS IN CLASS: THERMOSTSTATS ===========\n\n")
     for hcoiobj in [hcoiobj for hcoiobj in hcoiobjs if hcoiobj.hc]:
@@ -274,7 +268,7 @@ def enpolymatexport(exp_op, node, locnode, em, ec):
 
     en_idf.write("\n!-   ===========  ALL OBJECTS IN CLASS: AIRFLOW NETWORK ===========\n\n")
     
-    if enng and enng['enviparams']['afn']:
+    if enng['enviparams']['afn']:
         writeafn(exp_op, en_idf, enng)
 
     en_idf.write("!-   ===========  ALL OBJECTS IN CLASS: REPORT VARIABLE ===========\n\n")
@@ -332,9 +326,16 @@ def pregeo(op):
             bpy.data.materials.remove(materials)
     
     enviobjs = [obj for obj in scene.objects if obj.envi_type in ('1', '2') and obj.layers[0] == True and obj.hide == False]
-    envings = [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network']
-    enng = envings[0] if envings else 0
-                
+#    envings = [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network']
+#    enng = envings[0] if envings else 0
+    if not [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network']:
+        bpy.ops.node.new_node_tree(type='EnViN', name ="EnVi Network") 
+        for screen in bpy.data.screens:
+            for area in [area for area in screen.areas if area.type == 'NODE_EDITOR' and area.spaces[0].tree_type == 'ViN']:
+                area.spaces[0].node_tree = bpy.data.node_groups[op.nodeid.split('@')[1]]
+    enng = [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network'][0]
+    enng['enviparams'] = {'wpca': 0, 'wpcn': 0, 'crref': 0, 'afn': 0}
+          
     for obj in enviobjs:
         for mats in obj.data.materials:
             if 'en_'+mats.name not in [mat.name for mat in bpy.data.materials]:
@@ -349,7 +350,6 @@ def pregeo(op):
         for s, slots in enumerate(en_obj.material_slots):
             slots.material = bpy.data.materials['en_'+obj.data.materials[s].name]
             slots.material.envi_export = True
-
             dcdict = {'Wall':(1,1,1), 'Partition':(0.5,0.5,0.5), 'Window':(0,1,1), 'Roof':(0,1,0), 'Ceiling':(0, 0.5, 0), 'Floor':(0.44,0.185,0.07), 'Ground':(0.22, 0.09, 0.04), 'Shading':(1, 0, 0), 'Aperture':(0, 0, 1)}
             if slots.material.envi_con_type in dcdict:
                 slots.material.diffuse_color = dcdict[slots.material.envi_con_type]
@@ -367,8 +367,7 @@ def pregeo(op):
         bm.free()
 
         if any([(mat.envi_afsurface or mat.envi_boundary) for mat in en_obj.data.materials]):
-            enng = bpy.ops.node.new_node_tree(type='EnViN', name ="EnVi Network") if not len([ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network']) else [ng for ng in bpy.data.node_groups if ng.bl_label == 'EnVi Network'][0]                
-            enng['enviparams'] = {'wpca': 0, 'wpcn': 0, 'crref': 0, 'afn': 0}
+            enng['enviparams']['afn'] = 1
             if 'Control' not in [node.bl_label for node in enng.nodes]:
                 enng.nodes.new(type = 'AFNCon')         
                 enng.use_fake_user = 1
@@ -381,7 +380,7 @@ def pregeo(op):
         elif enng and en_obj.name in [node.zone for node in enng.nodes if hasattr(node, 'zone')]:
             for node in enng.nodes:
                 if hasattr(node, 'zone') and node.zone == en_obj.name:
-                    enng.nodes.remove(node)
+                    enng.nodes.remove(node)            
             
         bpy.data.scenes[0].layers[0:2] = True, False
         obj.select = True
@@ -458,7 +457,7 @@ class hcoiwrite(object):
 
     def zh(self):
         params = ('Name', 'Availability Schedule Name', 'Zone Supply Air Node Name', 'Zone Exhaust Air Node Name',
-              "Maximum Heating Supply Air Temperature ("+ u'\u00b0'+"C)", "Minimum Cooling Supply Air Temperature ("+ u'\u00b0'+"C)",
+              "Maximum Heating Supply Air Temperature (C)", "Minimum Cooling Supply Air Temperature (C)",
               'Maximum Heating Supply Air Humidity Ratio (kgWater/kgDryAir)', 'Minimum Cooling Supply Air Humidity Ratio (kgWater/kgDryAir)',
               'Heating Limit', 'Maximum Heating Air Flow Rate (m3/s)', 'Maximum Sensible Heating Capacity (W)',
               'Cooling limit', 'Maximum Cooling Air Flow Rate (m3/s)', 'Maximum Total Cooling Capacity (W)', 'Heating Availability Schedule Name',

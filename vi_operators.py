@@ -10,6 +10,8 @@ from math import cos, sin, pi, ceil, tan, modf
 
 try:
 #    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    import matplotlib
+    matplotlib.use('Qt4Agg', force = True)
     import matplotlib.pyplot as plt
     import matplotlib.cm as cm
     mp = 1
@@ -587,7 +589,7 @@ class NODE_OT_CSVExport(bpy.types.Operator, io_utils.ExportHelper):
         resdata = [resnode['allresdict']['Month'], resnode['allresdict']['Day'], resnode['allresdict']['Hour']] + [list(resnode['allresdict'][k]) for k in sorted(resnode['resdict'].keys(), key=lambda x: float(x)) if k in resnode['allresdict']]
         for rline in zip(*resdata):
             for r in rline:
-                resstring += '{},'.format(r)
+                resstring += '{:.3f},'.format(r)
             resstring += '\n'
         with open(self.filepath, 'w') as csvfile:
             csvfile.write(resstring)

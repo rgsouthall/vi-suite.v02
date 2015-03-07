@@ -1807,7 +1807,7 @@ class EnViSSFlowNode(bpy.types.Node, EnViNodes):
     noof = bpy.props.IntProperty(default = 2, min = 2, max = 4, name = '', description = 'Number of Sets of Opening Factor Data')
     spa = bpy.props.IntProperty(default = 90, min = 0, max = 90, name = '', description = 'Sloping Plane Angle')
     dcof = bpy.props.FloatProperty(default = 1, min = 0, max = 1, name = '', description = 'Discharge Coefficient')
-    ddtw = bpy.props.FloatProperty(default = 0.0001, min = 0, max = 10, name = '', description = 'Minimum Density Difference for Two-way Flow')
+    ddtw = bpy.props.FloatProperty(default = 1.0, min = 0.01, max = 10, name = '', description = 'Minimum Density Difference for Two-way Flow')
     amfc = bpy.props.FloatProperty(min = 0.001, max = 1, default = 0.01, name = "")
     amfe = bpy.props.FloatProperty(min = 0.5, max = 1, default = 0.65, name = "")
     dlen = bpy.props.FloatProperty(default = 2, name = "")
@@ -1819,11 +1819,11 @@ class EnViSSFlowNode(bpy.types.Node, EnViNodes):
     dmtc = bpy.props.FloatProperty(default = 0.0001, name = "")
     fe = bpy.props.FloatProperty(default = 0.6, min = 0, max = 1, name = "")
     rpd = bpy.props.FloatProperty(default = 4, min = 0.1, max = 50, name = "")
-    (of1, of2, of3, of4) =  [bpy.props.FloatProperty(default = 0.0, min = 0, max = 1, name = '', description = 'Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
-    (dcof1, dcof2, dcof3, dcof4) = [bpy.props.FloatProperty(default = 0.0, min = 0, max = 1, name = '', description = 'Discharge Coefficient for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
-    (wfof1, wfof2, wfof3, wfof4) = [bpy.props.FloatProperty(default = 0.0, min = 0, max = 1, name = '', description = 'Width Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
-    (hfof1, hfof2, hfof3, hfof4) = [bpy.props.FloatProperty(default = 0.0, min = 0, max = 1, name = '', description = 'Height Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
-    (sfof1, sfof2, sfof3, sfof4) = [bpy.props.FloatProperty(default = 0.0, min = 0, max = 1, name = '', description = 'Start Height Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
+    (of1, of2, of3, of4) =  [bpy.props.FloatProperty(default = 0.0001, min = 0.001, max = 1, name = '', description = 'Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
+    (dcof1, dcof2, dcof3, dcof4) = [bpy.props.FloatProperty(default = 0.001, min = 0.001, max = 1, name = '', description = 'Discharge Coefficient for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
+    (wfof1, wfof2, wfof3, wfof4) = [bpy.props.FloatProperty(default = 0.001, min = 0.001, max = 1, name = '', description = 'Width Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
+    (hfof1, hfof2, hfof3, hfof4) = [bpy.props.FloatProperty(default = 0.001, min = 0.001, max = 1, name = '', description = 'Height Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
+    (sfof1, sfof2, sfof3, sfof4) = [bpy.props.FloatProperty(default = 0.001, min = 0.001, max = 1, name = '', description = 'Start Height Factor for Opening Factor {} (dimensionless)'.format(i)) for i in range(4)]
     dcof = bpy.props.FloatProperty(default = 0.2, min = 0, max = 1, name = '', description = 'Discharge Coefficient')
     extnode =  bpy.props.BoolProperty(default = 0)
 
