@@ -1845,7 +1845,7 @@ class EnViSSFlowNode(bpy.types.Node, EnViNodes):
                             'OF3': (('OF3', 'of3'), ('DC3', 'dcof3'), ('Width OF3', 'wfof3'), ('Height OF3', 'hfof3'), ('Start height OF3', 'sfof3')),
                             'OF4': (('OF4', 'of4'), ('DC4', 'dcof4'), ('Width OF4', 'wfof4'), ('Height OF4', 'hfof4'), ('Start height OF4', 'sfof4')),
                             'HO': (('Closed FC', 'amfcc'), ('Closed FE', 'amfec'), ('Slope', 'spa'), ('DC', 'dcof')), 'Crack': (('Coefficient', 'amfc'), ('Exponent', 'amfe')),
-                            'ELA': (('ELA', '["ela"]'), ('DC', 'dcof'), ('PA diff', 'rpd'), ('FE', 'fe'))}
+                            'ELA': (('ELA', '["ela"]'), ('DC', 'dcof'), ('PA diff', 'rpd'), ('FE', 'amfe'))}
 
     def update(self):
         if self.get('layoutdict'):
@@ -1871,6 +1871,7 @@ class EnViSSFlowNode(bpy.types.Node, EnViNodes):
                 newrow(layout, "Limit OF:", self, 'mvof')
                 newrow(layout, "Lower OF:", self, 'lvof')
                 newrow(layout, "Upper OF:", self, 'uvof')
+
 
         row = layout.row()
         row.label('Component options:')
@@ -1998,7 +1999,7 @@ class EnViSFlowNode(bpy.types.Node, EnViNodes):
         for sock in (self.inputs[:] + self.outputs[:]):
             socklink(sock, self['nodeid'].split('@')[1])
         if self.linkmenu == 'ELA':
-            retelaarea(self)
+            retelaarea(self)          
         self.extnode = 0
         for sock in self.inputs[:] + self.outputs[:]:
             for l in sock.links:

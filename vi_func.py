@@ -109,8 +109,7 @@ def retelaarea(node):
     inosocks = [link.from_socket for link in inlinks if inlinks and link.from_socket.node.get('zone')]
     outosocks = [link.to_socket for x in outlinks for link in x if link.to_socket.node.get('zone')]
     if outosocks or inosocks:
-        elaarea = max([facearea(bpy.data.objects[sock.node.zone], bpy.data.objects[sock.node.zone].data.polygons[int(sock.sn)]) for sock in outosocks + inosocks])
-        node["_RNA_UI"] = {"ela": {"max":elaarea}}
+        node["_RNA_UI"] = {"ela": {"max": max([facearea(bpy.data.objects[sock.node.zone], bpy.data.objects[sock.node.zone].data.polygons[int(sock.sn)]) for sock in outosocks + inosocks])}} 
         
 def objmode():
     if bpy.context.active_object and bpy.context.active_object.type == 'MESH' and not bpy.context.active_object.hide:
