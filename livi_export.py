@@ -57,8 +57,7 @@ def radgexport(export_op, node, **kwargs):
         (scene.fs, scene.gfe, node['frames']['Material'], node['frames']['Geometry'], node['frames']['Lights']) = [kwargs['genframe']] * 5 if kwargs.get('genframe') else (0, 0, 0, 0, 0)
         scene.cfe = 0
         
-    for frame in range(scene.fs, scene.gfe + 1): 
-        rti, rtpoints = 1, ''
+    for frame in range(scene.fs, scene.gfe + 1):         
         if export == 'geoexport':
             scene.frame_set(frame)
         
@@ -81,10 +80,10 @@ def radgexport(export_op, node, **kwargs):
         # Geometry export routine
         
         if frame in range(scene.fs, max(node['frames']['Geometry'], node['frames']['Material']) + 1):
+            rti, rtpoints = 1, ''
             gframe = scene.frame_current if node['frames']['Geometry'] > 0 else 0
             mframe = scene.frame_current if node['frames']['Material'] > 0 else 0
             gradfile = "# Geometry \n\n"
-            lradfile = "# Lights \n\n" 
             
             for o in set(geooblist + caloblist):                
                 bm = bmesh.new()
@@ -177,7 +176,8 @@ def radgexport(export_op, node, **kwargs):
                 bm.free()
                             
     # Lights export routine
-
+        if frame in range(scene.fs, node['frames']['Lights'] + 1):
+            lradfile = "# Lights \n\n" 
             for o in lightlist:
                 if frame in range(node['frames']['Lights'] + 1):
                     iesname = os.path.splitext(os.path.basename(o.ies_name))[0]
@@ -199,6 +199,7 @@ def radgexport(export_op, node, **kwargs):
     node['radfiles'] = radfiles
     
     with open(scene['viparams']['filebase']+".rtrace", "w") as rtrace:
+        print('hi', rtpoints)
         rtrace.write(rtpoints)
     
     scene.fe = max(scene.cfe, scene.gfe)
