@@ -41,6 +41,7 @@ def li_calc(calc_op, simnode, connode, geonode, simacc, **kwargs):
                 if os.path.isfile("{}-{}.af".format(scene['viparams']['filebase'], frame)):
                     subprocess.call("{} {}-{}.af".format(scene['viparams']['rm'], scene['viparams']['filebase'], frame), shell=True)
                 rtcmd = "rtrace -n {0} -w {1} -faa -h -ov -I {2}-{3}.oct  < {2}.rtrace {4}".format(scene['viparams']['nproc'], simnode['radparams'], scene['viparams']['filebase'], frame, connode['simalg']) #+" | tee "+lexport.newdir+lexport.fold+self.simlistn[int(lexport.metric)]+"-"+str(frame)+".res"
+#                print(rtcmd) 
                 rtrun = Popen(rtcmd, shell = True, stdout=PIPE, stderr=STDOUT)                
                 with open(os.path.join(scene['viparams']['newdir'], connode['resname']+"-{}.res".format(frame)), 'w') as resfile:
                     for l, line in enumerate([line.decode() for line in rtrun.stdout]):
@@ -300,7 +301,7 @@ def resapply(calc_op, res, svres, simnode, connode, geonode, frames):
             if edfpass[frame] == 1:
                 edfpass[frame] = 2 if edfpassarea/edftotarea >= (0.8, 0.5)[connode.analysismenu == '0' and connode.bambuildtype == '4'] else edfpass[frame]
             scene['crits'], scene['dfpass'] = crits, dfpass
-        simnode.outputs['Data out'].hide = True
+#        simnode.outputs['Data out'].hide = True
     else:
         for fr, frame in enumerate(range(scene.fs, scene.fe + 1)):
             scene.frame_set(frame)
