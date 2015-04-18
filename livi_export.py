@@ -261,13 +261,16 @@ def radcexport(export_op, node, locnode, geonode):
                     with open(locnode.weather, "r") as epwfile:
                         epwlines = epwfile.readlines()
                         epwyear = epwlines[8].split(",")[0]
-                        subprocess.call(("epw2wea", "{}".format(locnode.weather), "{}".format(os.path.join(scene['viparams']['newdir'], "{}.wea".format(epwbase[0])))))
-                        subprocess.call("gendaymtx -m 1 {0} {1}.wea > {1}.mtx".format(('', '-O1')[node.analysismenu in ('1', '3')], os.path.join(scene['viparams']['newdir'], epwbase[0])), shell=True)                       
+                        subprocess.call(("epw2wea", "{}".format(locnode.weather), "{}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0]))))
+                        gdmcmd = ("gendaymtx", "-m", "1", "{}".format(('', '-O1')[node.analysismenu in ('1', '3')]), "{0}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0])))
+                        gdmrun = Popen(gdmcmd, stdout = PIPE, stderr=STDOUT)
+                        with open(os.path.join(scene['viparams']['newdir'], epwbase[0]+".mtx"), "w") as mtxfile:
+                            for line in gdmrun.stdout:
+                                mtxfile.write(line.decode())
+                        mtxfile = open(os.path.join(scene['viparams']['newdir'], epwbase[0]+".mtx"), "r")
                 else:
                     export_op.report({'ERROR'}, "Not a valid EPW file")
                     return
-    
-                mtxfile = open(os.path.join(scene['viparams']['newdir'], epwbase[0]+".mtx"), "r")
             
             elif node['source'] == '1' and int(node.analysismenu) > 1:
                 mtxfile = open(node.mtxname, "r")
