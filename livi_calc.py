@@ -81,10 +81,13 @@ def li_calc(calc_op, simnode, connode, geonode, simacc, **kwargs):
                     hours = len(vecvals)
 
                 finalillu = numpy.array([[numpy.sum(sensarray[f] * vv) for vv in vecvals] for f in prange])
+                print(len(finalillu))
                 if connode.analysismenu == '2':
                     res[findex] = [numpy.sum([i >= connode.dalux for i in f])*100/hours for f in finalillu]
                 elif connode.analysismenu == '3':
+                    res = numpy.zeros([len(frames), geonode['reslen'], hours])
                     res[findex] = finalillu
+                    print(res[0][0][12])
                 elif connode.analysismenu == '4':
                     res[findex] = [numpy.sum([connode.daauto >= i >= connode.dasupp for i in f])*100/hours for f in finalillu]
 
@@ -301,21 +304,21 @@ def resapply(calc_op, res, svres, simnode, connode, geonode, frames):
             if edfpass[frame] == 1:
                 edfpass[frame] = 2 if edfpassarea/edftotarea >= (0.8, 0.5)[connode.analysismenu == '0' and connode.bambuildtype == '4'] else edfpass[frame]
             scene['crits'], scene['dfpass'] = crits, dfpass
-#        simnode.outputs['Data out'].hide = True
+        simnode.outputs['Data out'].hide = True
     else:
         for fr, frame in enumerate(range(scene.fs, scene.fe + 1)):
             scene.frame_set(frame)
             sof, sov = 0, 0
             for geo in retobjs('livic'):
                 bpy.ops.object.select_all(action = 'DESELECT')
-                eof, eov, hours, scene.objects.active = sof + len(geo['cfaces']), sov + len(geo['cverts']), len(res[0]), None
+                eof, eov, hours, scene.objects.active = sof + len(geo['cfaces']), sov + len(geo['cverts']), len(res[0][0]), None
                 oarea = sum(geo['lisenseareas'])
-                geo['wattres'] = {str(frame):[0 for x in range(len(res[0]))]}
+                geo['wattres'] = {str(frame):[0 for x in range(len(res[0].T))]}
                 for i in range(hours):
                     if geonode.cpoint == '0':
-                        geo['wattres'][str(frame)][i] = sum([res[fr][i][sof:eof][j] * geo['lisenseareas'][j] for j in range(sof, eof)])
+                        geo['wattres'][str(frame)][i] = sum([res[fr].T[i][sof:eof][j] * geo['lisenseareas'][j] for j in range(sof, eof)])
                     else:
-                        geo['wattres'][str(frame)][i] = sum([res[fr][i][sov:eov][j] * geo['lisenseareas'][j] for j in range(sov, eov)])
+                        geo['wattres'][str(frame)][i] = sum([res[fr].T[i][sov:eov][j] * geo['lisenseareas'][j] for j in range(sov, eov)])
                 sov, sof = eov, eof
 
         simnode.outputs['Data out'].hide = False
