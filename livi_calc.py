@@ -81,13 +81,12 @@ def li_calc(calc_op, simnode, connode, geonode, simacc, **kwargs):
                     hours = len(vecvals)
 
                 finalillu = numpy.array([[numpy.sum(sensarray[f] * vv) for vv in vecvals] for f in prange])
-                print(len(finalillu))
+
                 if connode.analysismenu == '2':
                     res[findex] = [numpy.sum([i >= connode.dalux for i in f])*100/hours for f in finalillu]
                 elif connode.analysismenu == '3':
                     res = numpy.zeros([len(frames), geonode['reslen'], hours])
                     res[findex] = finalillu
-                    print(res[0][0][12])
                 elif connode.analysismenu == '4':
                     res[findex] = [numpy.sum([connode.daauto >= i >= connode.dasupp for i in f])*100/hours for f in finalillu]
 
@@ -163,7 +162,6 @@ def resapply(calc_op, res, svres, simnode, connode, geonode, frames):
                 bm.to_mesh(o.data)
                 bm.free()
                 
-
                 if connode.bl_label == 'LiVi Compliance':
                     o['compmat'] = mat.name
                     if fr == 0:

@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy, os, math, subprocess, datetime, bmesh
+import bpy, os, math, subprocess, datetime, bmesh, mathutils
 from math import sin, cos, tan, pi
 from subprocess import PIPE, Popen, STDOUT
 from .vi_func import retsky, retobj, retmesh, clearscene, solarPosition, mtx2vals, retobjs, selobj, selmesh, vertarea, radpoints, clearanim
@@ -65,14 +65,13 @@ def radgexport(export_op, node, **kwargs):
             mradfile, matnames = "# Materials \n\n", []
             for o in [bpy.data.objects[on] for on in scene['livig']]: 
                 mradfile +=  ''.join([m.radmat(scene) for m in o.data.materials if m.name not in matnames])
-                matnames = set([mat.name for mat in o.data.materials])
+#                matnames = set([mat.name for mat in o.data.materials])
                 for mat in [m for m in o.data.materials if m.name not in matnames]:
                     matnames.append(mat.name)
                     if mat['radentry'].split(' ')[1] in ('light', 'mirror', 'antimatter'):
                         export_op.report({'INFO'}, o.name+" has an antimatter, emission or mirror material. Basic export routine used with no modifiers.")
                         o['merr'] = 1 
-            bpy.ops.object.select_all(action='DESELECT')
-            
+            bpy.ops.object.select_all(action='DESELECT')            
             tempmatfilename = scene['viparams']['filebase']+".tempmat"
             with open(tempmatfilename, "w") as tempmatfile:
                 tempmatfile.write(mradfile)
@@ -87,8 +86,9 @@ def radgexport(export_op, node, **kwargs):
             
             for o in set(geooblist + caloblist):                
                 bm = bmesh.new()
-                bm.from_mesh(o.data)
+                bm.from_mesh(o.data)                
                 bm.transform(o.matrix_world)
+                bm.normal_update()
                 if o.name in scene['livig']:
                     if not kwargs.get('mo') or (kwargs.get('mo') and o in kwargs['mo']):
                         if not o.get('merr'):                    
@@ -151,10 +151,10 @@ def radgexport(export_op, node, **kwargs):
                         cindex = bm.faces.layers.int['cindex'] 
                         csf = [face for face in bm.faces if o.data.materials[face.material_index].mattype == '1']
                         csfc = [face.calc_center_median() for face in bm.faces if o.data.materials[face.material_index].mattype == '1']
-                        csfi = [face.index for face in bm.faces if o.data.materials[face.material_index].mattype == '1']
-                        
+                        csfi = [face.index for face in bm.faces if o.data.materials[face.material_index].mattype == '1']                        
+
                         for fi, f in enumerate(csf):
-                            rtpoints += '{0[0]:.3f} {0[1]:.3f} {0[2]:.3f} {1[0]:.3f} {1[1]:.3f} {1[2]:.3f} \n'.format([csfc[fi][i] + node.offset * f.normal.normalized()[i] for i in range(3)], f.normal.normalized()[:])
+                            rtpoints += '{0[0]:.3f} {0[1]:.3f} {0[2]:.3f} {1[0]:.3f} {1[1]:.3f} {1[2]:.3f} \n'.format([csfc[fi][i] + node.offset * f.normal[i] for i in range(3)], f.normal[:])
                             f[cindex] = rti
                             rti+= 1
                             
@@ -167,7 +167,7 @@ def radgexport(export_op, node, **kwargs):
                         cindex = bm.verts.layers.int['cindex']
                         cverts = set([item for sublist in [face.verts[:] for face in bm.faces if o.data.materials[face.material_index].mattype == '1'] for item in sublist])
                         for vert in cverts:
-                            rtpoints += '{0[0]:.3f} {0[1]:.3f} {0[2]:.3f} {1[0]:.3f} {1[1]:.3f} {1[2]:.3f} \n'.format([vert.co[i] + node.offset * vert.normal.normalized()[i] for i in range(3)], (vert.normal.normalized()[:]))
+                            rtpoints += '{0[0]:.3f} {0[1]:.3f} {0[2]:.3f} {1[0]:.3f} {1[1]:.3f} {1[2]:.3f} \n'.format([vert.co[i] + node.offset * vert.normal[i] for i in range(3)], vert.normal)
                             vert[cindex] = rti
                             rti += 1
                     (o['cverts'], o['cfaces'], o['lisenseareas']) = ([cv.index for cv in cverts], csfi, [vertarea(bm, vert) for vert in cverts]) if scene['liparams']['cp'] == '1' else ([], csfi, [f.calc_area() for f in csf])      
@@ -199,7 +199,6 @@ def radgexport(export_op, node, **kwargs):
     node['radfiles'] = radfiles
     
     with open(scene['viparams']['filebase']+".rtrace", "w") as rtrace:
-        print('hi', rtpoints)
         rtrace.write(rtpoints)
     
     scene.fe = max(scene.cfe, scene.gfe)
@@ -261,7 +260,14 @@ def radcexport(export_op, node, locnode, geonode):
                     with open(locnode.weather, "r") as epwfile:
                         epwlines = epwfile.readlines()
                         epwyear = epwlines[8].split(",")[0]
-                        subprocess.call(("epw2wea", "{}".format(locnode.weather), "{}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0]))))                        
+                        subprocess.call(("epw2wea", "{}".format(locnode.weather), "{}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0])))) 
+                        if node.startmonth != 1 or node.endmonth != 12:
+                            with open("{}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0])), 'r') as weafile:
+                                wealines = weafile.readlines()
+                                weaheader = [line for line in wealines[:6]]
+                                wearange = [line for line in wealines[6:] if int(line.split()[0]) in range (node.startmonth, node.endmonth + 1)]
+                            with open("{}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0])), 'w') as weafile:  
+                                [weafile.write(line) for line in weaheader + wearange] 
                         gdmcmd = ("gendaymtx -m 1 {} {}".format(('', '-O1')[node.analysismenu in ('1', '3')], "{0}.wea".format(os.path.join(scene['viparams']['newdir'], epwbase[0]))))
                         with open(os.path.join(scene['viparams']['newdir'], epwbase[0]+".mtx"), "w") as mtxfile:
                             Popen(gdmcmd.split(), stdout = mtxfile, stderr=STDOUT).wait()

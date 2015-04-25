@@ -62,8 +62,8 @@ def li_display(simnode, connode, geonode):
         cv.diffuse, cv.glossy, cv.transmission, cv.scatter, cv.shadow = 0, 0, 0, 0, 0
         bm = bmesh.new()
         bm.from_mesh(o.data)
-        bm.transform(o.matrix_world)
-        
+        bm.normal_update()
+                
         if scene['liparams']['cp'] == '0':  
             cindex = bm.faces.layers.int['cindex']
             for f in [f for f in bm.faces if f[cindex] < 1]:
@@ -100,6 +100,7 @@ def li_display(simnode, connode, geonode):
                 if scene.vi_disp_3d == 1 and scene['liparams']['cp'] == '0':
                     for face in bmesh.ops.extrude_discrete_faces(bm, faces = bm.faces)['faces']:
                         face.select = True
+                bm.transform(o.matrix_world)
                 bm.to_mesh(ores.data)
                 bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
             

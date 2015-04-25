@@ -460,7 +460,9 @@ def vertarea(mesh, vert):
             ofaces = [oface for oface in faces if len([v for v in oface.verts if v in face.verts]) == 2]    
             for oface in ofaces:
                 ovs.append([i for i in face.verts if i in oface.verts])
-            if len(ovs) == 1:
+            if len(ovs) == 0:
+                eps = [(e.verts[0].co + e.verts[1].co)/2 for e in vert.link_edges]
+            elif len(ovs) == 1:
                 if hasattr(mesh.verts, "ensure_lookup_table"):
                     mesh.verts.ensure_lookup_table()
                 sedgevs = (vert.index, [v.index for v in fvs if v not in ovs][0])

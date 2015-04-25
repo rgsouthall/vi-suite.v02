@@ -367,11 +367,12 @@ def pregeo(op):
         en_obj["volume"] = bm.calc_volume()
         bm.free()
 
-        if any([(mat.envi_afsurface or mat.envi_boundary) for mat in en_obj.data.materials]):
+        if any([mat.envi_afsurface for mat in en_obj.data.materials]):
             enng['enviparams']['afn'] = 1
             if 'Control' not in [node.bl_label for node in enng.nodes]:
-                enng.nodes.new(type = 'AFNCon')         
-                enng.use_fake_user = 1
+                enng.nodes.new(type = 'AFNCon')  
+        if any([(mat.envi_afsurface or mat.envi_boundary) for mat in en_obj.data.materials]):        
+            enng.use_fake_user = 1
             if en_obj.envi_type =='1' and en_obj.name not in [node.zone for node in enng.nodes if hasattr(node, 'zone')]:
                 enng.nodes.new(type = 'EnViZone').zone = en_obj.name
             elif en_obj.envi_type == '1':
