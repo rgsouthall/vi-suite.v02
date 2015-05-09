@@ -150,8 +150,8 @@ def radgexport(export_op, node, **kwargs):
                         bm.faces.layers.int.new('cindex')
                         cindex = bm.faces.layers.int['cindex'] 
                         csf = [face for face in bm.faces if o.data.materials[face.material_index].mattype == '1']
-                        csfc = [face.calc_center_median() for face in bm.faces if o.data.materials[face.material_index].mattype == '1']
-                        csfi = [face.index for face in bm.faces if o.data.materials[face.material_index].mattype == '1']                        
+                        csfc = [face.calc_center_median() for face in csf]
+                        csfi = [face.index for face in csf]                        
 
                         for fi, f in enumerate(csf):
                             rtpoints += '{0[0]:.3f} {0[1]:.3f} {0[2]:.3f} {1[0]:.3f} {1[1]:.3f} {1[2]:.3f} \n'.format([csfc[fi][i] + node.offset * f.normal[i] for i in range(3)], f.normal[:])
